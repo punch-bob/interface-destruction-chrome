@@ -1,0 +1,35 @@
+body {
+  margin: 0;
+  padding: 48px 24px;
+  color: #edf8ff;
+  background: #080e20;
+  font:
+    16px/1.7 system-ui,
+    sans-serif;
+}
+main {
+  max-width: 740px;
+  margin: auto;
+  padding: 36px;
+  background: #10192b;
+  border: 1px solid #31415d;
+  border-radius: 20px;
+}
+h1 {
+  font-size: 34px;
+  line-height: 1.2;
+}
+h2 {
+  margin-top: 32px;
+  color: #75f4ff;
+}
+.eyebrow {
+  color: #75f4ff;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+.note {
+  padding-top: 16px;
+  border-top: 1px solid #31415d;
+  color: #afc2d9;
+}

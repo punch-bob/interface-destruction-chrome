@@ -1,0 +1,346 @@
+.destruction-game,
+.destruction-game *,
+.destruction-launcher,
+.destruction-launcher * {
+  box-sizing: border-box;
+}
+.destruction-launcher {
+  right: 12px;
+  bottom: 12px;
+  opacity: 0.7;
+  z-index: 2147483000;
+  position: fixed;
+}
+.destruction-launcher:hover,
+.destruction-launcher:focus-within {
+  opacity: 1;
+}
+.destruction-game {
+  inset: 0;
+  z-index: 2147483001;
+  overflow: hidden;
+  position: fixed;
+  isolation: isolate;
+  background: #080e20;
+}
+.destruction-worldLayer {
+  inset: 0;
+  z-index: 0;
+  position: absolute;
+  isolation: isolate;
+}
+.destruction-effectsLayer {
+  inset: 0;
+  z-index: 1;
+  position: absolute;
+  isolation: isolate;
+}
+.destruction-background {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  pointer-events: none;
+}
+.destruction-scene {
+  inset: 0;
+  overflow: hidden;
+  position: absolute;
+  mask-repeat: no-repeat;
+  pointer-events: none;
+}
+.destruction-canvas {
+  inset: 0;
+  width: 100%;
+  cursor: none;
+  height: 100%;
+  outline: none;
+  position: absolute;
+  touch-action: none;
+}
+.destruction-fragments {
+  inset: 0;
+  position: absolute;
+  pointer-events: none;
+}
+.destruction-toolbar {
+  gap: 8px;
+  top: 12px;
+  left: 50%;
+  width: max-content;
+  border: 1px solid #31415d;
+  display: flex;
+  padding: 12px;
+  z-index: 2;
+  position: absolute;
+  max-width: calc(100% - 24px);
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #16243ded, #10192bf5);
+  box-shadow:
+    0 16px 50px #00000055,
+    inset 0 1px 0 #ffffff0a;
+  align-items: stretch;
+  border-radius: 12px;
+  flex-direction: column;
+  backdrop-filter: blur(16px);
+}
+.destruction-heading {
+  gap: 12px;
+  color: #edf8ff;
+  display: flex;
+  font-size: 14px;
+  align-items: center;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  line-height: 18px;
+  flex-direction: row;
+  letter-spacing: 0.15px;
+  justify-content: space-between;
+}
+.destruction-heading > b {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.destruction-score {
+  color: #75f4ff;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  line-height: 24px;
+  text-shadow: 0 0 20px #75f4ff66;
+  letter-spacing: 0.15px;
+  font-variant-numeric: tabular-nums;
+}
+.destruction-progress {
+  height: 2px;
+  overflow: hidden;
+  background: #080e20;
+  border-radius: 4px;
+}
+.destruction-progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #75f4ff, #ff6fbe);
+  box-shadow: 0 0 10px #75f4ff;
+  transition: width 150ms ease;
+}
+.destruction-actions {
+  gap: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  flex-direction: row;
+  justify-content: center;
+}
+.destruction-controlButton {
+  color: #edf8ff;
+  border: 1px solid #657f9c;
+  cursor: pointer;
+  opacity: 1;
+  padding: 8px 12px;
+  font-size: 12px;
+  background: #263650;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  line-height: 16px;
+  border-radius: 8px;
+  letter-spacing: 0.2px;
+}
+.destruction-controlButton:hover {
+  background: #354b69;
+}
+.destruction-controlButton:active {
+  background: #1e314d;
+}
+.destruction-controlButton:focus-visible {
+  outline: 2px solid #75f4ff;
+  outline-offset: 2px;
+}
+.destruction-controlButton[data-primary="true"] {
+  color: #07111e;
+  background: #75f4ff;
+  border-color: #75f4ff;
+}
+.destruction-controlButton[data-primary="true"]:hover {
+  background: #b7faff;
+}
+.destruction-weaponButton {
+  gap: 0;
+  color: #afc2d9;
+  width: 114px;
+  border: 1px solid #31415d;
+  cursor: pointer;
+  display: flex;
+  padding: 4px 0 8px;
+  position: relative;
+  background: #08132299;
+  transition:
+    background 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+  align-items: center;
+  border-radius: 8px;
+  flex-direction: column;
+}
+.destruction-weaponButton:hover {
+  background: #1e314d;
+  border-color: #657f9c;
+}
+.destruction-weaponButton:focus-visible {
+  outline: 2px solid #75f4ff;
+  outline-offset: 2px;
+}
+.destruction-weaponButton[data-active="true"] {
+  color: #edf8ff;
+  background: linear-gradient(160deg, #75f4ff22, #10192b);
+  box-shadow:
+    inset 0 0 16px #75f4ff11,
+    0 0 10px #75f4ff22;
+  border-color: #75f4ff;
+}
+.destruction-weaponNumber {
+  top: 4px;
+  left: 8px;
+  color: #75f4ff;
+  position: absolute;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.2px;
+}
+.destruction-weaponModel {
+  width: 108px;
+  height: 44px;
+  pointer-events: none;
+}
+.destruction-weaponLabel {
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  line-height: 16px;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+.destruction-hints {
+  gap: 12px;
+  left: 50%;
+  color: #afc2d9;
+  width: max-content;
+  border: 1px solid #31415d;
+  bottom: 12px;
+  display: flex;
+  padding: 8px 12px;
+  z-index: 2;
+  position: absolute;
+  flex-wrap: wrap;
+  font-size: 12px;
+  max-width: calc(100% - 24px);
+  transform: translateX(-50%);
+  background: #10192bdf;
+  align-items: center;
+  font-family: Arial, sans-serif;
+  line-height: 16px;
+  border-radius: 8px;
+  flex-direction: row;
+  letter-spacing: 0.2px;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  justify-content: center;
+}
+.destruction-hints kbd {
+  color: #75f4ff;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: 0.2px;
+}
+.destruction-message {
+  gap: 12px;
+  top: 50%;
+  left: 50%;
+  color: #edf8ff;
+  border: 1px solid #31415d;
+  display: flex;
+  padding: 24px;
+  z-index: 2;
+  position: absolute;
+  font-size: 14px;
+  max-width: 80%;
+  transform: translate(-50%, -50%);
+  background: #10192b;
+  box-shadow: 0 24px 80px #00000088;
+  text-align: center;
+  align-items: center;
+  font-family: Arial, sans-serif;
+  line-height: 18px;
+  border-radius: 12px;
+  flex-direction: column;
+  letter-spacing: 0.15px;
+  backdrop-filter: blur(18px);
+}
+.destruction-message > b {
+  color: #75f4ff;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  line-height: 24px;
+  letter-spacing: 0.15px;
+}
+
+.destruction-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  padding: 32px;
+  text-align: center;
+  background: rgba(8, 16, 30, 0.96);
+  color: #edf5ff;
+  font:
+    15px/1.6 system-ui,
+    sans-serif;
+}
+.destruction-loader strong {
+  font-size: 22px;
+}
+.destruction-loader > span:not(.destruction-spinner) {
+  max-width: 520px;
+  color: #a7b7cc;
+}
+.destruction-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #26364e;
+  border-top-color: #75f4ff;
+  border-radius: 50%;
+  animation: destruction-spin 0.8s linear infinite;
+}
+.destruction-loader button {
+  margin-top: 12px;
+  padding: 10px 22px;
+  border: 1px solid #60718b;
+  border-radius: 8px;
+  background: #23334b;
+  color: #edf5ff;
+  font: inherit;
+  cursor: pointer;
+}
+@keyframes destruction-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.destruction-game[data-gojo="true"] .destruction-weaponButton {
+  width: 150px;
+}
+.destruction-game[data-gojo="true"] .destruction-weaponLabel {
+  white-space: normal;
+  text-align: center;
+  padding: 0 5px;
+}

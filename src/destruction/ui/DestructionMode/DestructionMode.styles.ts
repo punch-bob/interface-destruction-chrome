@@ -1,0 +1,25 @@
+const classes = {
+  launcher: "destruction-launcher",
+  game: "destruction-game",
+  worldLayer: "destruction-worldLayer",
+  effectsLayer: "destruction-effectsLayer",
+  background: "destruction-background",
+  scene: "destruction-scene",
+  canvas: "destruction-canvas",
+  fragments: "destruction-fragments",
+  toolbar: "destruction-toolbar",
+  heading: "destruction-heading",
+  score: "destruction-score",
+  progress: "destruction-progress",
+  progressFill: "destruction-progressFill",
+  actions: "destruction-actions",
+  controlButton: "destruction-controlButton",
+  weaponButton: "destruction-weaponButton",
+  weaponNumber: "destruction-weaponNumber",
+  weaponModel: "destruction-weaponModel",
+  weaponLabel: "destruction-weaponLabel",
+  hints: "destruction-hints",
+  message: "destruction-message",
+} as const;
+
+export default () => classes;
