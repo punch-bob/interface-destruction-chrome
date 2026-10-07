@@ -367,6 +367,33 @@ export const createWeaponAudio = () => {
           break;
       }
     },
+    duel: (
+      kind:
+        | "infinity"
+        | "void"
+        | "slash"
+        | "furnace"
+        | "shrine"
+        | "hit"
+        | "victory",
+    ) => {
+      if (kind === "slash") {
+        hiss(0.24, 4500, 0.5, "highpass");
+        tone(260, 65, 0.2, 0.25, "triangle");
+      } else if (kind === "hit") {
+        tone(100, 30, 0.18, 0.4);
+      } else if (kind === "infinity") {
+        tone(480, 190, 0.9, 0.4, "sine");
+        tone(485, 195, 0.9, 0.3, "sine");
+      } else if (kind === "victory") {
+        tone(220, 440, 1.2, 0.4);
+        tone(330, 660, 1.2, 0.25, "triangle");
+      } else {
+        tone(kind === "void" ? 52 : 72, 18, 1.7, 0.75);
+        tone(110, 30, 1.3, 0.4, "sawtooth");
+        hiss(1.3, kind === "furnace" ? 1800 : 700, 0.55);
+      }
+    },
     droneExplosion: () => {
       tone(125, 22, 0.85, 0.8);
       hiss(0.9, 2200, 0.75);

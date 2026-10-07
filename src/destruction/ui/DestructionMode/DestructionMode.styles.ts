@@ -20,6 +20,8 @@ const classes = {
   weaponLabel: "destruction-weaponLabel",
   hints: "destruction-hints",
   message: "destruction-message",
+  duelPanel: "destruction-duelPanel",
+  duelBar: "destruction-duelBar",
 } as const;
 
 export default () => classes;

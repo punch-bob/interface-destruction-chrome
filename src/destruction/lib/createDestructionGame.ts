@@ -1,3 +1,4 @@
+import { createSorcererDuel, type IDuelHud } from "./createSorcererDuel";
 import {
   beamCutVerticalRange,
   containsBeamCut,
@@ -113,6 +114,7 @@ interface IFragment {
   centerY: number;
   radius: number;
   mass?: number;
+  infinityVelocity?: { vx: number; vy: number };
   orbit?: { holeId: number; angle: number; distance: number };
   repulsion?: number;
 }
@@ -129,6 +131,7 @@ interface IGameOptions {
   onMode: (gojo: boolean) => void;
   onCinematic: (active: boolean) => void;
   onDrone: (active: boolean) => void;
+  onDuel: (hud: IDuelHud) => void;
 }
 
 const TARGET_SELECTOR = [
@@ -298,6 +301,7 @@ export const createDestructionGame = ({
   onMode,
   onCinematic,
   onDrone,
+  onDuel,
 }: IGameOptions) => {
   const context = canvas.getContext("2d");
   if (!context) {
@@ -1651,6 +1655,7 @@ export const createDestructionGame = ({
       return;
     }
     if (bullet.gojoRed) {
+      duel.red(bullet.x, bullet.y);
       explode(bullet.x, Math.min(bullet.y, height - 5), 165, true);
       redImpacts.push({ x: bullet.x, y: bullet.y, age: 0, radius: 190 });
       redImpacts = redImpacts.slice(-5);
@@ -1695,6 +1700,7 @@ export const createDestructionGame = ({
   };
 
   const fire = (grenade = false) => {
+    if (duel.defeated) return;
     if (gojoMode) grenade = false;
     if (
       !grenade &&
@@ -1833,6 +1839,9 @@ export const createDestructionGame = ({
         "Space",
         "KeyW",
         "KeyS",
+        "KeyE",
+        "KeyR",
+        "KeyB",
         "Escape",
         "Digit1",
         "Digit2",
@@ -1857,6 +1866,20 @@ export const createDestructionGame = ({
     }
     if (paused) {
       return;
+    }
+    if (gojoMode && !event.repeat) {
+      if (event.code === "KeyE") {
+        activateInfinity();
+        return;
+      }
+      if (event.code === "KeyR") {
+        expandDomain();
+        return;
+      }
+      if (event.code === "KeyB") {
+        summonSukuna();
+        return;
+      }
     }
     keys.add(event.code);
     if (event.code === "Minus" || /^Digit[0-9]$/.test(event.code)) {
@@ -1884,7 +1907,7 @@ export const createDestructionGame = ({
       detonateDrone();
       return;
     }
-    if (paused) {
+    if (paused || duel.defeated) {
       return;
     }
     event.preventDefault();
@@ -1911,7 +1934,11 @@ export const createDestructionGame = ({
       return;
     }
     if (event.button === 0) {
+      aim.x = event.clientX;
+      aim.y = event.clientY;
       shooting = true;
+      // A quick click must fire even when down/up both arrive between two frames.
+      if (weapon !== 8 && cooldown <= 0) fire();
     }
     if (event.button === 2) {
       if (gojoMode) shooting = true;
@@ -1972,6 +1999,102 @@ export const createDestructionGame = ({
           flying: keys.has("Space") || keys.has("KeyW"),
         });
 
+  const applyBeamDamage = (cutKey: string, beam: IBeamCut) => {
+    const { x, y, endX, endY, radius } = beam;
+    const distance = Math.hypot(endX - x, endY - y);
+    const dx = (endX - x) / (distance || 1),
+      dy = (endY - y) / (distance || 1);
+    const visitedCells = new Set<string>(),
+      beamTargets = new Set<ITarget>();
+    const padding = Math.ceil((radius + 3) / 64),
+      steps = Math.max(1, Math.ceil(distance / 32));
+    for (let i = 0; i <= steps; i++) {
+      const bx = Math.floor((x + ((endX - x) * i) / steps) / 64),
+        by = Math.floor((y + ((endY - y) * i) / steps) / 64);
+      for (let ox = -padding; ox <= padding; ox++)
+        for (let oy = -padding; oy <= padding; oy++) {
+          const key = `${bx + ox}:${by + oy}`;
+          if (visitedCells.has(key)) continue;
+          visitedCells.add(key);
+          targetGrid.get(key)?.forEach((target) => {
+            if (!target.destroyed) beamTargets.add(target);
+          });
+        }
+    }
+    // Surface material is removed only by the exact beam mask; glyphs still detach individually.
+    beamTargets.forEach((target) => {
+      if (
+        target.destroyed ||
+        !targetIntersects(target, x, y, endX, endY, radius, true)
+      )
+        return;
+      if (!target.letter) {
+        (target.beamCuts ??= new Set()).add(cutKey);
+        const points = target.shape ?? [
+          { x: 0, y: 0 },
+          { x: 1, y: 0 },
+          { x: 1, y: 1 },
+          { x: 0, y: 1 },
+        ];
+        if (
+          points.every((point) =>
+            containsBeamCut(
+              beam,
+              target.rect.x + point.x * target.rect.width,
+              target.rect.y + point.y * target.rect.height,
+            ),
+          )
+        ) {
+          target.destroyed = true;
+          destroyedCount++;
+          updateHoles();
+        }
+        return;
+      }
+      const fraction = Math.max(
+        0,
+        Math.min(
+          distance,
+          (target.rect.x + target.rect.width / 2 - x) * dx +
+            (target.rect.y + target.rect.height / 2 - y) * dy,
+        ),
+      );
+      destroy(target, x + dx * fraction, y + dy * fraction, 1.3);
+    });
+  };
+  let sorcererCutId = 0;
+  const duel = createSorcererDuel({
+    hud: onDuel,
+    cue: audio.duel,
+    cut: (beam) => {
+      const key = `sukuna:${++sorcererCutId}`;
+      setBurn(key, { ...beam, color: "#ff4265", heat: 0.45 });
+      updateHoles(false);
+      applyBeamDamage(key, beam);
+    },
+    explode: (x, y, radius) => explode(x, y, radius, true),
+  });
+  const activateInfinity = () => {
+    if (gojoMode && !paused) {
+      audio.unlock();
+      duel.activateInfinity();
+    }
+  };
+  const expandDomain = () => {
+    if (gojoMode && !paused && !purpleShot) {
+      audio.unlock();
+      duel.expandVoid();
+    }
+  };
+  const summonSukuna = () => {
+    if (gojoMode && !paused && !purpleShot && !duel.fighting) {
+      audio.unlock();
+      shooting = false;
+      projectiles = [];
+      blackHoles = [];
+      duel.start();
+    }
+  };
   const fireLaser = (dt: number, shot?: { angle: number }) => {
     if (!shot) laserCharge += dt;
     if (gojoMode && laserCharge < 0.45) return;
@@ -2022,64 +2145,9 @@ export const createDestructionGame = ({
     // Пространственная сетка проверяет только полосу луча, включая его полную толщину.
     // Для неподвижного луча прежней толщины все попадания уже обработаны.
     if (!sameLine || radius > (previous?.radius ?? 0)) {
-      const visitedCells = new Set<string>(),
-        beamTargets = new Set<ITarget>();
-      const padding = Math.ceil((radius + 3) / 64),
-        steps = Math.max(1, Math.ceil(distance / 32));
-      for (let i = 0; i <= steps; i++) {
-        const bx = Math.floor((x + ((endX - x) * i) / steps) / 64),
-          by = Math.floor((y + ((endY - y) * i) / steps) / 64);
-        for (let ox = -padding; ox <= padding; ox++)
-          for (let oy = -padding; oy <= padding; oy++) {
-            const key = `${bx + ox}:${by + oy}`;
-            if (visitedCells.has(key)) continue;
-            visitedCells.add(key);
-            targetGrid.get(key)?.forEach((target) => {
-              if (!target.destroyed) beamTargets.add(target);
-            });
-          }
-      }
-      // Surface material is removed only by the exact beam mask; glyphs still detach individually.
-      beamTargets.forEach((target) => {
-        if (
-          target.destroyed ||
-          !targetIntersects(target, x, y, endX, endY, radius, true)
-        )
-          return;
-        if (!target.letter) {
-          (target.beamCuts ??= new Set()).add(lastLaserCutKey);
-          const points = target.shape ?? [
-            { x: 0, y: 0 },
-            { x: 1, y: 0 },
-            { x: 1, y: 1 },
-            { x: 0, y: 1 },
-          ];
-          if (
-            points.every((point) =>
-              containsBeamCut(
-                laser!,
-                target.rect.x + point.x * target.rect.width,
-                target.rect.y + point.y * target.rect.height,
-              ),
-            )
-          ) {
-            target.destroyed = true;
-            destroyedCount++;
-            updateHoles();
-          }
-          return;
-        }
-        const fraction = Math.max(
-          0,
-          Math.min(
-            distance,
-            (target.rect.x + target.rect.width / 2 - x) * dx +
-              (target.rect.y + target.rect.height / 2 - y) * dy,
-          ),
-        );
-        destroy(target, x + dx * fraction, y + dy * fraction, 1.3);
-      });
+      applyBeamDamage(lastLaserCutKey, laser);
     }
+    if (gojoMode) duel.beam(laser);
     const fraction = Math.random();
     spark(
       x + (endX - x) * fraction,
@@ -2418,8 +2486,11 @@ export const createDestructionGame = ({
       }
       return blast.age < 8;
     });
+    duel.step(dt, player, width, height, blackHoles);
+    if (duel.defeated) shooting = false;
     onCinematic(
-      nuclearBlasts.length > 0 ||
+      duel.active ||
+        nuclearBlasts.length > 0 ||
         blackHoles.length > 0 ||
         acidPools.length > 0 ||
         !!drone ||
@@ -2486,6 +2557,10 @@ export const createDestructionGame = ({
       for (let index = 0; index < steps; index++) {
         bullet.x += (bullet.vx * dt) / steps;
         bullet.y += (bullet.vy * dt) / steps;
+        if (bullet.gojoRed && duel.contains(bullet.x, bullet.y, bullet.size)) {
+          detonate(bullet);
+          return false;
+        }
         const hit = bullet.blackHole
           ? undefined
           : nearbyTargets(bullet.x, bullet.y).find(
@@ -2585,6 +2660,10 @@ export const createDestructionGame = ({
       return particle.life > 0;
     });
     debris = debris.filter((piece) => {
+      if (duel.holdFragment(piece)) {
+        piece.element.style.transform = `translate(${piece.x}px, ${piece.y}px) rotate(${piece.angle}rad)`;
+        return true;
+      }
       piece.repulsion = Math.max(0, (piece.repulsion ?? 0) - dt);
       const hole =
         piece.repulsion > 0
@@ -2745,6 +2824,7 @@ export const createDestructionGame = ({
         player.x,
       );
     }
+    duel.drawBackground(ctx, time);
     let smolderSamples = 0;
     let smolderDraws = 0;
     const smolderStride = Math.max(
@@ -3046,6 +3126,7 @@ export const createDestructionGame = ({
     nuclearBlasts.forEach((blast) =>
       drawNuclearExplosion(ctx, blast, width, height),
     );
+    duel.draw(ctx, time);
     ctx.strokeStyle = colors.G600;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -3077,12 +3158,16 @@ export const createDestructionGame = ({
 
   return {
     launchDrone,
+    activateInfinity,
+    expandDomain,
+    summonSukuna,
     setMuted: audio.setMuted,
     resume: () => setPaused(false),
     pause: () => setPaused(true),
     setMode: (gojo: boolean) => {
       if (purpleShot) return;
       gojoMode = gojo;
+      duel.setEnabled(gojo);
       shooting = false;
       laserCharge = 0;
       purpleShot = undefined;

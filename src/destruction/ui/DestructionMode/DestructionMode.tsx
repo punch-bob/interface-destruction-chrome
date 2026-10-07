@@ -1,3 +1,4 @@
+import { initialDuelHud } from "../../lib/createSorcererDuel";
 import { type FC, type RefObject, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -34,6 +35,7 @@ export const DestructionMode: FC<IDestructionModeProps> = ({
   const [progress, setProgress] = useState(0);
   const [weapon, setWeapon] = useState(1);
   const [gojo, setGojo] = useState(false);
+  const [duel, setDuel] = useState(initialDuelHud);
   const [muted, setMuted] = useState(false);
   const [round, setRound] = useState(0);
   const backgroundRef = useRef<HTMLCanvasElement>(null);
@@ -74,6 +76,7 @@ export const DestructionMode: FC<IDestructionModeProps> = ({
         onMode: setGojo,
         onCinematic: setCinematic,
         onDrone: setDroneActive,
+        onDuel: setDuel,
       });
       gameRef.current?.setMode(gojo);
       gameRef.current?.setMuted(muted);
@@ -131,7 +134,11 @@ export const DestructionMode: FC<IDestructionModeProps> = ({
       ];
 
   return createPortal(
-    <div className={classes.game} data-gojo={gojo}>
+    <div
+      className={classes.game}
+      data-gojo={gojo}
+      data-duel={gojo && duel.status !== "idle"}
+    >
       <div className={classes.worldLayer}>
         <canvas
           ref={backgroundRef}
@@ -201,6 +208,60 @@ export const DestructionMode: FC<IDestructionModeProps> = ({
           >
             {gojo ? "Обычный режим" : "Режим Сатору Годжо"}
           </button>
+          {gojo && (
+            <>
+              <button
+                type="button"
+                className={classes.controlButton}
+                aria-pressed={duel.infinity > 0}
+                disabled={
+                  paused ||
+                  duel.infinityCooldown > 0 ||
+                  duel.status === "defeat"
+                }
+                onClick={() => {
+                  gameRef.current?.activateInfinity();
+                  canvasRef.current?.focus();
+                }}
+              >
+                {duel.infinity > 0
+                  ? `Бесконечность: ${duel.infinity}с`
+                  : duel.infinityCooldown > 0
+                    ? `Бесконечность: ${duel.infinityCooldown}с до готовности`
+                    : "Бесконечность · E"}
+              </button>
+              <button
+                type="button"
+                className={classes.controlButton}
+                disabled={
+                  paused || duel.domainCooldown > 0 || duel.status === "defeat"
+                }
+                onClick={() => {
+                  gameRef.current?.expandDomain();
+                  canvasRef.current?.focus();
+                }}
+              >
+                {duel.domainCooldown > 0
+                  ? `Территория: ${duel.domainCooldown}с до готовности`
+                  : "Неограниченная пустота · R"}
+              </button>
+              <button
+                type="button"
+                className={classes.controlButton}
+                disabled={paused || duel.status === "fighting"}
+                onClick={() => {
+                  gameRef.current?.summonSukuna();
+                  canvasRef.current?.focus();
+                }}
+              >
+                {duel.status === "idle"
+                  ? "Вызвать Сукуну · B"
+                  : duel.status === "fighting"
+                    ? "Бой с Сукуной"
+                    : "Реванш с Сукуной · B"}
+              </button>
+            </>
+          )}
           {!gojo && (
             <button
               type="button"
@@ -254,8 +315,53 @@ export const DestructionMode: FC<IDestructionModeProps> = ({
         </div>
       </div>
 
+      {gojo && duel.status !== "idle" && (
+        <div className={classes.duelPanel} aria-live="polite">
+          <b>
+            РЁМЕН СУКУНА ·{" "}
+            {duel.phase === 2 ? "ИСТИННАЯ ФОРМА" : "КОРОЛЬ ПРОКЛЯТИЙ"}
+          </b>
+          <span>Сукуна: {duel.bossHealth} / 1800</span>
+          <div className={classes.duelBar}>
+            <div
+              style={{
+                width: `${duel.bossHealth / 18}%`,
+                background: "#fa4264",
+              }}
+            />
+          </div>
+          <span>Сатору Годжо: {duel.health} / 240</span>
+          <div className={classes.duelBar}>
+            <div
+              style={{ width: `${duel.health / 2.4}%`, background: "#69d9ff" }}
+            />
+          </div>
+          <strong>
+            {duel.status === "victory"
+              ? "ПОБЕДА"
+              : duel.status === "defeat"
+                ? "ПОРАЖЕНИЕ"
+                : duel.domain > 0
+                  ? "Неограниченная пустота"
+                  : duel.technique}
+          </strong>
+          <small>
+            A/D — движение · Space — полёт · 1–3 — техники · E/R — защита и
+            территория
+          </small>
+          <small>
+            Следи за подготовкой атак. Территория и ближнее усиление Сукуны
+            обходят Бесконечность.
+          </small>
+        </div>
+      )}
       <div className={classes.hints}>
-        {gojo && <span>Фиолетовая: один клик · слияние 0,45 с</span>}
+        {gojo && (
+          <span>
+            Фиолетовая: один клик · E — Бесконечность · R — территория · B —
+            Сукуна
+          </span>
+        )}
         {droneActive && <span>{t("droneHint")}</span>}
         <span>
           <kbd>A</kbd> <kbd>D</kbd> {t("move")}

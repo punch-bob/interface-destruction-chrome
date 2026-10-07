@@ -344,3 +344,62 @@
   text-align: center;
   padding: 0 5px;
 }
+
+.destruction-duelPanel {
+  position: absolute;
+  top: 225px;
+  right: 16px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 300px;
+  max-width: calc(100% - 32px);
+  padding: 14px;
+  border: 1px solid #924255;
+  border-radius: 12px;
+  background: #121323;
+  box-shadow: 0 8px 30px #0008;
+  color: #f7e9ef;
+  font:
+    12px/1.4 Arial,
+    sans-serif;
+  pointer-events: none;
+}
+.destruction-duelPanel b {
+  color: #ff8195;
+  font-size: 12px;
+}
+.destruction-duelPanel strong {
+  min-height: 18px;
+  color: #a8eaff;
+}
+.destruction-duelPanel small {
+  color: #b4b6c9;
+  font-size: 11px;
+}
+.destruction-duelBar {
+  height: 6px;
+  background: #303043;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.destruction-duelBar > div {
+  height: 100%;
+  transition: width 0.1s linear;
+}
+.destruction-controlButton:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+@media (max-width: 700px) {
+  .destruction-duelPanel {
+    top: 280px;
+    width: 240px;
+    padding: 10px;
+  }
+}
+
+.destruction-game[data-duel="true"] .destruction-hints {
+  display: none;
+}
